@@ -68,4 +68,11 @@ export const DEMO_TOKENS = {
   BONK: { address: "0x1e4a5963abfd975d8c9021ce480b42188849d41d", chain: "xlayer", chainId: "196" },
   SCAM: { address: "0x000000000000000000000000000000000000dead", chain: "xlayer", chainId: "196" },
   NEWPEPE: { address: "0x6982508145454ce325ddbe47a25d4ec3d2311933", chain: "xlayer", chainId: "196" },
+  // RUGPULL is the demo-facing alias for the honeypot scenario — same
+  // curated data as SCAM, surfaced via an honestly-labelled chip so a
+  // judge can see the safety core's hard-veto / blocked-execution path.
+  RUGPULL: { address: "0x000000000000000000000000000000000000dead", chain: "xlayer", chainId: "196" },
 };
+
+// Reuse the SCAM honeypot fixture for the RUGPULL alias.
+FIXTURES.RUGPULL = FIXTURES.SCAM;

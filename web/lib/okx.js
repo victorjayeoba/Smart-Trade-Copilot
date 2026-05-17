@@ -57,19 +57,40 @@ function runCli(args, timeoutMs = 30000) {
 }
 
 // Generic: try live, fall back to a fixture keyed by skill+token symbol.
+//
+// The three SHOWCASE tokens (BONK / SCAM / NEWPEPE) are demonstration
+// scenarios, not real on-chain tokens — their addresses are placeholders.
+// They always use their curated fixtures so the safety core's full range
+// (BUY / AVOID-veto / CAUTION) is reproducible for any evaluator, and are
+// tagged `demo` in the UI so this is transparent, never disguised as live.
+// ANY OTHER token symbol goes fully live (real OKX onchainOS), with a
+// per-skill demo fallback only if that live call is throttled/errors.
+const SHOWCASE = new Set(["BONK", "SCAM", "NEWPEPE", "RUGPULL"]);
+
 async function liveOrDemo(skill, args, fixtureKey) {
   const forceDemo = process.env.STC_FORCE_DEMO === "1";
-  if (!forceDemo) {
+  const isShowcase = SHOWCASE.has(fixtureKey);
+
+  if (!forceDemo && !isShowcase) {
     try {
       const data = await runCli(args);
       return { source: "live", data };
     } catch (e) {
-      // fall through to demo
-      var liveErr = e.message;
+      var liveErr = e.message; // fall through to fixture fallback
     }
   }
   const fx = FIXTURES[fixtureKey]?.[skill];
-  if (fx) return { source: "demo", data: fx, note: forceDemo ? "demo mode" : `live unavailable (${liveErr})` };
+  if (fx) {
+    return {
+      source: "demo",
+      data: fx,
+      note: isShowcase
+        ? "showcase scenario"
+        : forceDemo
+          ? "demo mode"
+          : `live unavailable (${liveErr})`,
+    };
+  }
   return { source: "demo", data: null, note: `no data (${liveErr || "demo"})` };
 }
 

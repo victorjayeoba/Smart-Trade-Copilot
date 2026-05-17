@@ -185,7 +185,7 @@ export default function Home() {
         <div className="row">
           <input
             className="token"
-            placeholder="Token symbol or address — e.g. BONK, SCAM, NEWPEPE"
+            placeholder="Real token contract address — e.g. 0xa0b8…eb48 (USDC), or a symbol"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && analyze()}
@@ -196,12 +196,37 @@ export default function Home() {
           </button>
         </div>
         <div className="chips">
-          {["BONK", "SCAM", "NEWPEPE"].map((t) => (
-            <span key={t} className="chip" onClick={() => !busy && (setSymbol(t), analyze(t))}>
-              try “{t}”
+          {[
+            { label: "USDC", q: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
+            { label: "WETH", q: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" },
+            { label: "WBTC", q: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599" },
+            { label: "PEPE", q: "0x6982508145454ce325ddbe47a25d4ec3d2311933" },
+          ].map((c) => (
+            <span
+              key={c.label}
+              className="chip chip-live"
+              onClick={() => !busy && (setSymbol(c.q), analyze(c.q))}
+              title="Real token — fully live OKX onchainOS data"
+            >
+              ▶ {c.label} · LIVE
             </span>
           ))}
+          <span
+            className="chip chip-scenario"
+            onClick={() => !busy && (setSymbol("RUGPULL"), analyze("RUGPULL"))}
+            title="Curated honeypot scenario — every datapoint is tagged 'demo' in the trace, never disguised as live. Shows the safety core's hard-veto."
+          >
+            ⚠ RUGPULL · SCENARIO
+          </span>
         </div>
+        <p className="chip-hint">
+          The first four are <b>real on-chain tokens analysed fully live</b> on
+          OKX onchainOS (each datapoint tagged <code>live</code>); the verdict
+          is whatever the real data says. <b>RUGPULL</b> is a{" "}
+          <b>curated honeypot scenario</b> (tagged <code>demo</code>, never
+          shown as live) so you can see the deterministic safety core hard-veto
+          and block execution. Or paste any real contract address.
+        </p>
 
         {steps.length > 0 && (
           <div className="trace">

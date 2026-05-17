@@ -134,6 +134,36 @@ button.go:disabled {
   color: var(--text);
   border-color: var(--accent);
 }
+.chip-live {
+  color: #6fe0a0;
+  border-color: #2e6b48;
+  background: #08130d;
+  font-weight: 600;
+}
+.chip-live:hover {
+  color: #8fffc0;
+  border-color: #6fe0a0;
+}
+.chip-scenario {
+  color: #e0b48a;
+  border-color: #6b4a2e;
+  background: #130d08;
+  font-weight: 600;
+}
+.chip-scenario:hover {
+  color: #ffcf9a;
+  border-color: #e0b48a;
+}
+.chip-hint {
+  margin-top: 9px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.chip-hint code {
+  font-family: var(--mono);
+  color: #e0b48a;
+}
 
 .trace {
   margin-top: 22px;
