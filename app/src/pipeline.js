@@ -208,7 +208,12 @@ export async function runPipeline(ctx) {
   // ── Stage 6: DeFi alternatives (additive, never a downgrade) ─────
   await stage("defi", async () => {
     if (!ctx.symbol) throw new OnchainosError("no symbol to search DeFi", { kind: "cli" });
-    const r = data(await run(["defi", "search", "--query", ctx.symbol]));
+    // onchainos `defi search` keys results by --token (a comma-separated
+    // token keyword), NOT --query. Using --query exits 2 with
+    // "unexpected argument". Verified against onchainos 3.3.3.
+    const r = data(
+      await run(["defi", "search", "--token", ctx.symbol, "--chain", ctx.chain]),
+    );
     const list = Array.isArray(r) ? r : (r?.list ?? r?.result ?? []);
     if (Array.isArray(list) && list.length) {
       out.notes.push(

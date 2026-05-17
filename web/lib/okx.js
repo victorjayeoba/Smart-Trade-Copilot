@@ -190,8 +190,26 @@ export async function memeRisk({ symbol, address, chain }) {
   };
 }
 
-export async function defiAlternatives({ symbol }) {
-  const r = await liveOrDemo("defi", ["defi", "search", "--query", symbol], norm(symbol));
+export async function defiAlternatives({ symbol, chain }) {
+  // DeFi venue search is keyed by ticker. When the token was entered
+  // as a raw contract address there is no symbol to search by (a hex
+  // string is not a valid token keyword) — skip honestly instead of
+  // firing a broken call.
+  const sym = (symbol || "").trim();
+  if (!sym || /^0x[0-9a-f]{6,}$/i.test(sym)) {
+    return {
+      source: "skip",
+      note: "no token symbol to search DeFi venues by",
+      venues: 0,
+      raw: [],
+    };
+  }
+  // onchainos `defi search` keys results by --token (comma-separated
+  // token keyword), NOT --query. --query exits 2 with "unexpected
+  // argument". Verified against onchainos 3.3.3.
+  const args = ["defi", "search", "--token", sym];
+  if (chain) args.push("--chain", chain);
+  const r = await liveOrDemo("defi", args, norm(sym));
   const d = r.data;
   const list = Array.isArray(d) ? d : (d?.list ?? d?.result ?? []);
   return {

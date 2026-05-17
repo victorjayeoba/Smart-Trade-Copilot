@@ -6,11 +6,15 @@
 skills-lock.json
 hi.ts
 
+# --- design skill: local-only, not part of the published project ---
+skills/raycast-design/
+
 # --- secrets / deps / build artifacts / noise ---
 .env
 .env.local
 **/node_modules/
 **/.next/
+**/*.tsbuildinfo
 .vercel
 *.log
 .DS_Store
