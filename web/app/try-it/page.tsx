@@ -72,6 +72,27 @@ function skillStateFor(steps: Step[], keys: readonly string[]): SkillCell {
 
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
+// True when the run was served by the public hosted preview (no
+// onchainos binary on the serverless host, so skills returned curated
+// sample data). We surface this loudly instead of letting a truncated
+// per-row note imply something is broken.
+function isHostedPreview(steps: Step[]): boolean {
+  return steps.some(
+    (s) =>
+      s.kind === "skill" &&
+      typeof (s as any).note === "string" &&
+      /hosted preview/i.test((s as any).note),
+  );
+}
+
+// The long fallback note repeats on every row. Collapse it to a short
+// chip; the banner above the console carries the full explanation.
+function shortNote(note?: string): string | undefined {
+  if (!note) return note;
+  if (/hosted preview/i.test(note)) return "sample data";
+  return note;
+}
+
 const LIVE_CHIPS = [
   { label: "USDC", q: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
   { label: "WETH", q: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" },
@@ -329,6 +350,33 @@ export default function TryIt() {
             </span>
           </div>
 
+          {/* Hosted-preview banner. The public site has no onchainos
+              binary, so skills serve curated sample data. Say so plainly
+              and point to the two ways to see it fully live. */}
+          {!busy && isHostedPreview(steps) && (
+            <div className="preview-banner">
+              <span className="preview-banner-tag">HOSTED PREVIEW</span>
+              <div className="preview-banner-body">
+                <b>This is the live demo running on sample data.</b> The
+                public host can’t run the OKX <code>onchainos</code> engine,
+                so the agent’s flow, reasoning and deterministic safety core
+                are fully real — but the on-chain datapoints are curated
+                samples (tagged <span className="tag tag-demo">demo</span>,
+                never disguised as live).
+                <br />
+                To run it <b>fully live</b> against real OKX onchainOS data,{" "}
+                <a
+                  href="https://github.com/victorjayeoba/Smart-Trade-Copilot#run-locally"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  download the code and run it locally
+                </a>{" "}
+                — or watch the demo video for a live walkthrough.
+              </div>
+            </div>
+          )}
+
           {/* The full OKX skill suite, shown upfront so judges see
               every tool the agent can reach. Each row reflects the
               latest streamed state for that skill. */}
@@ -354,7 +402,11 @@ export default function TryIt() {
                     OKX <b>{sk.name}</b>
                     <span className="sk-desc">{sk.desc}</span>
                   </span>
-                  {st.note && <span className="sk-note">{st.note}</span>}
+                  {st.note && (
+                    <span className="sk-note" title={st.note}>
+                      {shortNote(st.note)}
+                    </span>
+                  )}
                   <span
                     className={`sk-tag ${
                       skipped
