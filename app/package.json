@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "analyze": "node src/index.js analyze"
+    "analyze": "node src/index.js analyze",
+    "demo": "node src/index.js --demo analyze BONK --chain solana",
+    "test": "node tests/verdict.test.mjs"
   },
   "engines": {
     "node": ">=18.17"

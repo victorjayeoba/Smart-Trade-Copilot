@@ -6,9 +6,11 @@
 skills-lock.json
 hi.ts
 
-# --- secrets / deps / noise ---
+# --- secrets / deps / build artifacts / noise ---
 .env
 .env.local
 **/node_modules/
+**/.next/
+.vercel
 *.log
 .DS_Store

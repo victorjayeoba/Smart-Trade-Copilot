@@ -72,26 +72,61 @@ $ smart-trade-copilot analyze BONK --chain solana
 ## Install
 
 ```bash
-git clone <this-repo> && cd app
+git clone https://github.com/victorjayeoba/Smart-Trade-Copilot
+cd Smart-Trade-Copilot/app
 npm install
-npm link            # optional: exposes `smart-trade-copilot` / `stc`
 ```
 
-Requires Node ≥ 18.17 and the OKX `onchainos` CLI
-(auto-resolved from `~/.local/bin`, or set `ONCHAINOS_BIN`). Install onchainos:
-<https://github.com/okx/onchainos-skills>.
+Requires Node ≥ 18.17. Live mode also needs the OKX `onchainos` CLI
+(auto-resolved from `~/.local/bin`, or set `ONCHAINOS_BIN`) —
+install: <https://github.com/okx/onchainos-skills>.
 
-## Usage
+## How to test it
+
+### ① Fastest — demo mode (no key, no onchainos, ~5 seconds)
 
 ```bash
-smart-trade-copilot analyze PEPE --chain ethereum
-smart-trade-copilot analyze 0xabc… --chain base --buy 0.05 --pay eth
-smart-trade-copilot --demo analyze BONK --chain solana   # offline sample
+node src/index.js --demo analyze BONK --chain solana
 ```
 
-The shared hackathon API key is rate-limited. For full live volume, copy
-`.env.example` → `.env` and add a personal key from the
+Runs the full pipeline + verdict engine + UI on bundled sample data.
+This is the quickest way to see exactly what the product does.
+
+### ② Verify the decision engine (unit tests, no network)
+
+```bash
+node --test 2>/dev/null || node tests/verdict.test.mjs
+```
+
+7/7 cases: honeypot & CRITICAL hard-veto to AVOID, HIGH floors to
+CAUTION, a failed scan is **never** treated as a pass.
+
+### ③ Fully live (real OKX data)
+
+```bash
+cp .env.example .env      # add an OKX key (see below)
+node src/index.js analyze PEPE --chain ethereum
+```
+
+Every stage hits the real OKX `onchainos` backend. Get a key at the
 [OKX Developer Portal](https://web3.okx.com/onchain-os/dev-portal).
+
+> **Note on API tiers:** OKX *Trial* keys cap the `security` and `market`
+> endpoints. When an endpoint is unavailable the tool **does not fabricate a
+> "safe" result** — it marks that stage *unverified* and downgrades the
+> verdict to CAUTION. That fail-safe is intentional and is itself a feature.
+> A standard/internal key (what evaluators use) runs all stages live.
+
+### Optionally test the gated buy flow
+
+```bash
+onchainos wallet login your@email.com   # OTP login to OKX Agentic Wallet
+onchainos wallet verify <otp>
+node src/index.js analyze PEPE --chain ethereum --buy 0.001 --pay eth
+```
+
+The tool analyzes, shows the verdict, **quotes**, then **asks you to type
+`yes`** before broadcasting. Decline at the prompt to test it spending nothing.
 `.env` is gitignored.
 
 ## Architecture

@@ -57,7 +57,9 @@ export function run(args, opts = {}) {
   return new Promise((resolve, reject) => {
     let child;
     try {
-      child = spawn(BIN, args, { windowsHide: true });
+      // Explicitly forward the full environment (incl. OKX_API_KEY /
+      // OKX_SECRET_KEY / OKX_PASSPHRASE loaded from .env) to onchainos.
+      child = spawn(BIN, args, { windowsHide: true, env: process.env });
     } catch (e) {
       return reject(
         new OnchainosError(
