@@ -115,18 +115,26 @@ You are autonomous in WHAT to investigate. You are powerless over the final safe
  */
 export async function runAgent({ symbol, prompt, buy, payToken, amount, confirmed }, emit) {
   const sym = (symbol || "").toUpperCase();
+  // Resolve the token's real chain. Curated scenarios are mapped in
+  // DEMO_TOKENS. A raw 0x address is an EVM token — default it to
+  // Ethereum (where the live demo tokens live), NOT X Layer, so the
+  // swap quote targets the chain the token actually exists on.
+  const isRawEvmAddr = /^0x[a-fA-F0-9]{40}$/.test(String(symbol).trim());
   const tok =
-    DEMO_TOKENS[sym] || {
-      address: symbol,
-      chain: "xlayer",
-      chainId: "196",
-    };
+    DEMO_TOKENS[sym] ||
+    (isRawEvmAddr
+      ? { address: symbol, chain: "ethereum", chainId: "1" }
+      : { address: symbol, chain: "xlayer", chainId: "196" });
   const ctx = { symbol: sym, address: tok.address, chain: tok.chain, chainId: tok.chainId };
+  // Pay token defaults to the chain's native/liquid token so the quote
+  // is valid on that chain (OKB on X Layer, native ETH on Ethereum).
+  const defaultPay = tok.chain === "xlayer" ? "okb" : "eth";
   const intent = buy
     ? {
         wantsBuy: true,
         address: tok.address,
-        payToken: payToken || "okb",
+        chain: tok.chain,
+        payToken: payToken || defaultPay,
         amount: amount || "0.5",
         confirmed: !!confirmed,
       }
@@ -329,22 +337,31 @@ async function finish(signals, evidence, sourceTags, emit, intent) {
           `The agent is structurally unable to swap a vetoed token.`,
       });
     } else {
-      emit({ type: "execution_offered", verdict: verdict.verdict });
+      const chainLabel =
+        intent.chain === "xlayer"
+          ? "X Layer"
+          : intent.chain.charAt(0).toUpperCase() + intent.chain.slice(1);
+      emit({
+        type: "execution_offered",
+        verdict: verdict.verdict,
+        chain: intent.chain,
+        payToken: (intent.payToken || "").toUpperCase(),
+      });
       const w = await walletStatus();
       if (w.demo || !w.loggedIn) {
         emit({
           type: "execution_unavailable",
           reason: w.demo
             ? "Public demo host has no logged-in OKX Agentic Wallet. The gate is shown; a real broadcast requires running locally with `onchainos wallet login`."
-            : "No OKX Agentic Wallet logged in. Run `onchainos wallet login` to enable real X Layer execution.",
+            : `No OKX Agentic Wallet logged in. Run \`onchainos wallet login\` to enable real ${chainLabel} execution.`,
         });
       } else {
         try {
           const q = await swapQuote({
-            from: intent.payToken || "okb",
+            from: intent.payToken,
             to: intent.address,
             amount: intent.amount,
-            chain: "xlayer",
+            chain: intent.chain,
           });
           emit({
             type: "swap_quote",
@@ -358,21 +375,21 @@ async function finish(signals, evidence, sourceTags, emit, intent) {
             emit({ type: "execution_blocked", reason: "Quote flags a honeypot on buy — blocked." });
           } else if (intent.confirmed) {
             const ex = await swapExecute({
-              from: intent.payToken || "okb",
+              from: intent.payToken,
               to: intent.address,
               amount: intent.amount,
-              chain: "xlayer",
+              chain: intent.chain,
               wallet: w.address,
             });
             emit({
               type: "swap_broadcast",
               txHash: ex.swapTxHash,
-              note: "Broadcast — final on-chain status pending. Verify on the X Layer explorer.",
+              note: `Broadcast on ${chainLabel} — final on-chain status pending. Verify on the ${chainLabel} explorer.`,
             });
           } else {
             emit({
               type: "awaiting_confirmation",
-              text: `Verdict ${verdict.verdict}. Quoted on X Layer. Awaiting explicit user confirmation before broadcasting — the agent will not auto-execute.`,
+              text: `Verdict ${verdict.verdict}. Quoted on ${chainLabel}. Awaiting explicit user confirmation before broadcasting — the agent will not auto-execute.`,
             });
           }
         } catch (e) {

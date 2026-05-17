@@ -21,6 +21,8 @@ const SKILL_LABEL: Record<string, string> = {
   "okx-defi": "OKX DeFi · yield alternatives",
 };
 
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
 export default function Home() {
   const [symbol, setSymbol] = useState("");
   const [busy, setBusy] = useState(false);
@@ -129,7 +131,7 @@ export default function Home() {
         symbol: lastSymbol,
         buy: true,
         amount,
-        payToken: "okb",
+        // omit payToken — the agent picks the chain-correct one
         confirmed,
       }),
     });
@@ -298,7 +300,15 @@ export default function Home() {
           ) : (
             <div className="exec">
               <div className="exec-head">
-                Execute buy on <b>X&nbsp;Layer</b> (OKX Agentic Wallet)
+                Execute buy on{" "}
+                <b>
+                  {exec?.execution_offered?.chain
+                    ? exec.execution_offered.chain === "xlayer"
+                      ? "X Layer"
+                      : cap(exec.execution_offered.chain)
+                    : "the token's chain"}
+                </b>{" "}
+                (OKX Agentic Wallet)
               </div>
               <div className="row">
                 <input
@@ -308,9 +318,11 @@ export default function Home() {
                   disabled={busy}
                   style={{ maxWidth: 120 }}
                 />
-                <span className="pay">OKB →</span>
+                <span className="pay">
+                  {exec?.execution_offered?.payToken || "pay"} →
+                </span>
                 <button className="go" onClick={() => buy(false)} disabled={busy}>
-                  {busy ? "…" : "Quote on X Layer"}
+                  {busy ? "…" : "Get quote"}
                 </button>
               </div>
 

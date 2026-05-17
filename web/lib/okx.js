@@ -257,12 +257,33 @@ export async function swapQuote({ from, to, amount, chain }) {
     ["swap", "quote", "--from", from, "--to", to, "--readable-amount", String(amount), "--chain", chain],
     40000,
   );
+  // onchainos returns `data: [ { toTokenAmount, toToken:{decimal,...}, ... } ]`.
+  // toTokenAmount is a raw integer string — convert with the token's decimals
+  // to a human-readable amount, or the UI shows "?".
+  const q = Array.isArray(d) ? d[0] : (d?.[0] ?? d);
+  const toTok = q?.toToken || {};
+  const rawOut = q?.toTokenAmount ?? q?.toAmount ?? null;
+  const dec = Number(toTok.decimal ?? toTok.decimals ?? 18);
+  let toAmount = null;
+  if (rawOut != null && Number.isFinite(Number(rawOut))) {
+    const human = Number(rawOut) / 10 ** dec;
+    toAmount =
+      human >= 1
+        ? human.toLocaleString(undefined, { maximumFractionDigits: 4 })
+        : human.toPrecision(4);
+    if (toTok.tokenSymbol) toAmount += " " + toTok.tokenSymbol;
+  }
+  const honey =
+    toTok.isHoneyPot === true ||
+    String(toTok.isHoneyPot) === "true" ||
+    q?.isHoneyPot === true;
   return {
     source: "live",
-    toAmount: d?.toTokenAmount ?? d?.toAmount ?? null,
-    priceImpactPct: pickNum(d, "priceImpact", "priceImpactPct"),
-    isHoneypot: d?.isHoneyPot === true || String(d?.isHoneyPot) === "true",
-    raw: d,
+    toAmount, // human-readable string e.g. "21.91 USDC", or null
+    priceImpactPct:
+      pickNum(q, "priceImpactPercentage", "priceImpact", "priceImpactPct") ?? 0,
+    isHoneypot: honey,
+    raw: q,
   };
 }
 

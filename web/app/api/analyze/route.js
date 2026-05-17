@@ -22,7 +22,9 @@ export async function POST(req) {
   // Optional execution intent. `confirmed` must be an explicit true sent
   // by the user clicking "Broadcast" — the agent never self-confirms.
   const buy = body.buy === true;
-  const payToken = body.payToken ? String(body.payToken).slice(0, 16) : "okb";
+  // null → let the agent pick the chain-appropriate pay token
+  // (ETH on Ethereum, OKB on X Layer). Don't hardcode okb here.
+  const payToken = body.payToken ? String(body.payToken).slice(0, 16) : null;
   const amount = body.amount ? String(body.amount).slice(0, 24) : "0.5";
   const confirmed = body.confirmed === true;
 
