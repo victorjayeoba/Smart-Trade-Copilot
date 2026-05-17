@@ -1,0 +1,14 @@
+# --- OKX-installed skills & tooling (NOT our work; do not publish) ---
+.agents/
+.claude/
+.cursor/
+.cursor-plugin/
+skills-lock.json
+hi.ts
+
+# --- secrets / deps / noise ---
+.env
+.env.local
+**/node_modules/
+*.log
+.DS_Store
