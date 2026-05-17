@@ -393,7 +393,7 @@ async function finish(signals, evidence, sourceTags, emit, intent) {
             });
           }
         } catch (e) {
-          emit({ type: "execution_error", error: e.message });
+          emit({ type: "execution_error", error: humanizeExecError(e.message, chainLabel) });
         }
       }
     }
@@ -408,4 +408,29 @@ function human(n) {
   if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
   if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
   return String(Math.round(n));
+}
+
+// Translate raw onchainos/node errors into clear, HONEST messages.
+// We never hide that it failed or why — we just make the real on-chain
+// outcome readable instead of dumping a JSON-RPC stack trace.
+function humanizeExecError(msg, chainLabel = "the chain") {
+  const m = String(msg || "");
+  if (/insufficient funds for gas|have 0 want|insufficient balance/i.test(m)) {
+    return `Reached ${chainLabel} and the transaction was simulated — the chain rejected it because this wallet holds no funds for the trade + gas. No funds moved. (Fund the OKX Agentic Wallet to broadcast for real.)`;
+  }
+  if (/not supported on|Token not found|verify the contract address/i.test(m)) {
+    return `${chainLabel} rejected the token/pair (not tradable on this chain). No funds moved.`;
+  }
+  if (/honeypot|81362/i.test(m)) {
+    return `Broadcast halted: the chain/risk layer flagged a potential honeypot. No funds moved.`;
+  }
+  if (/slippage|price impact|82000|51006/i.test(m)) {
+    return `Swap could not complete (liquidity / slippage / price moved). No funds moved.`;
+  }
+  if (/timeout|ECONN|network/i.test(m)) {
+    return `Network/timeout reaching ${chainLabel}. No funds moved — safe to retry.`;
+  }
+  // Unknown: keep it honest but trim the raw RPC noise.
+  const short = m.replace(/\s+/g, " ").slice(0, 140);
+  return `Execution did not complete: ${short}${m.length > 140 ? "…" : ""} (No funds moved.)`;
 }
