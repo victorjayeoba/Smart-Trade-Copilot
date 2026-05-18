@@ -116,15 +116,21 @@ You are autonomous in WHAT to investigate. You are powerless over the final safe
 export async function runAgent({ symbol, prompt, buy, payToken, amount, confirmed }, emit) {
   const sym = (symbol || "").toUpperCase();
   // Resolve the token's real chain. Curated scenarios are mapped in
-  // DEMO_TOKENS. A raw 0x address is an EVM token — default it to
-  // Ethereum (where the live demo tokens live), NOT X Layer, so the
-  // swap quote targets the chain the token actually exists on.
-  const isRawEvmAddr = /^0x[a-fA-F0-9]{40}$/.test(String(symbol).trim());
+  // DEMO_TOKENS. A raw 0x address is an EVM token (default Ethereum,
+  // where the live demo tokens live). A base58 string that is NOT 0x
+  // is a Solana mint — route it to Solana (chainId 501), mirroring the
+  // CLI. Without this, Solana mints fell through to X Layer and OKX
+  // rejected them (code=-1 Invalid) → bogus demo fallback.
+  const raw = String(symbol || "").trim();
+  const isRawEvmAddr = /^0x[a-fA-F0-9]{40}$/.test(raw);
+  const isSolanaMint = !isRawEvmAddr && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(raw);
   const tok =
     DEMO_TOKENS[sym] ||
     (isRawEvmAddr
-      ? { address: symbol, chain: "ethereum", chainId: "1" }
-      : { address: symbol, chain: "xlayer", chainId: "196" });
+      ? { address: raw, chain: "ethereum", chainId: "1" }
+      : isSolanaMint
+        ? { address: raw, chain: "solana", chainId: "501" }
+        : { address: symbol, chain: "xlayer", chainId: "196" });
   const ctx = { symbol: sym, address: tok.address, chain: tok.chain, chainId: tok.chainId };
   // Pay token defaults to the chain's native/liquid token so the quote
   // is valid on that chain (OKB on X Layer, native ETH on Ethereum).
