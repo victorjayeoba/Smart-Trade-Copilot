@@ -11,13 +11,13 @@
 
 ## 📹 Demo Video
 
-> **▶ Watch the demo:** _link will be placed here_
+<p align="center">
+  <a href="https://youtu.be/NiOtU7SdL64" title="Watch the Smart Trade Copilot demo">
+    <img src="assets/banner.jpg" alt="Smart Trade Copilot — click to watch the demo video" width="100%"/>
+  </a>
+</p>
 
-<!--
-  Replace the line above and uncomment the embed below when the video is ready:
-
-  [![Smart Trade Copilot — demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://VIDEO_URL "Watch the demo")
--->
+<p align="center"><strong>▶ <a href="https://youtu.be/NiOtU7SdL64">Watch the demo on YouTube</a></strong></p>
 
 **Live demo:** _<deploy URL — TBD>_
 
