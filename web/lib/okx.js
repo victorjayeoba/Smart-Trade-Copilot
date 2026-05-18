@@ -91,6 +91,18 @@ async function liveOrDemo(skill, args, fixtureKey) {
           : `live unavailable (${liveErr})`,
     };
   }
+  // Last resort: no live data AND no token-specific fixture (a non-showcase
+  // token on the binary-less hosted preview). Serve the neutral GENERIC
+  // sample so the analysis still completes coherently — explicitly tagged
+  // demo so it is never mistaken for a real scan of this token.
+  const generic = FIXTURES.GENERIC?.[skill];
+  if (generic) {
+    return {
+      source: "demo",
+      data: generic,
+      note: "sample data — hosted preview (run locally for live OKX)",
+    };
+  }
   return { source: "demo", data: null, note: `no data (${liveErr || "demo"})` };
 }
 
